@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const EMAIL_TOKEN_EXPIRATION_MINUTES = 10;
 const AUTHENTICATION_TOKEN_EXPIRATION_HOURS = 12;
-const JWT_SECRET = "SUPER SECRET";
+const JWT_SECRET = 'SUPER SECRET';
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -20,7 +20,7 @@ function generateAuthToken(tokenId: number): string{
      const jwtPayload = {tokenId};
 
      return jwt.sign(jwtPayload, JWT_SECRET, {
-        algorithm: "HS256",
+        algorithm: 'HS256',
         noTimestamp: true
      });
 }

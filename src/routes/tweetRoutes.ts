@@ -1,30 +1,70 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { error } from "console";
+import jwt from "jsonwebtoken";
+
 
 const router = Router();
 const prisma = new PrismaClient();
+const JWT_SECRET = 'SUPER SECRET';
 
 
 //Tweet CRUD
 
 //create tweet
-router.post("/", async(req, res) =>{ try {
+router.post("/", async(req, res) =>{
+    
+    
+    const {content, image, } = req.body
+    const authHeader = req.headers["authorization"];
 
-    const {content, image, userId} = req.body
+    console.log(authHeader);
 
-    const result = await prisma.tweet.create({
-        data: {
-            content,
-            image,
-            userId // TODO manage based on the auth user
-        },
-     });
+    const jwtToken = authHeader?.split(' ')[1];
+    if(!jwtToken){
+        return res.sendStatus(401);
+    }
+    //decode  the jwt token
+
+    try {
+        const payload = (await jwt.verify(jwtToken, JWT_SECRET)) as {
+            tokenId: number
+        };
+        const dbToken = await prisma.token.findUnique({
+            where: {id: payload.tokenId},
+            include:{user: true},
+        })
+        
+        if(!dbToken?.valid || dbToken.expiration < new Date()){
+           return res.status(401).json({error: "API token expired"});
+        }
+       
+        console.log(dbToken.user);
+        
+    } catch (e) {
+        console.log(e);
+        
+        return res.sendStatus(401);
+    }
+    res.sendStatus(200);
+
+    
+//     try {
+
+   
+
+//     const result = await prisma.tweet.create({
+//         data: {
+//             content,
+//             image,
+//             userId // TODO manage based on the auth user
+//         },
+//      });
      
-     res.json(result);
-} catch (e) {
-    res.status(400).json({error: "Username and email should be unique"})
-}
+//      res.json(result);
+// } catch (e) {
+//     res.status(400).json({error: "Username and email should be unique"})
+// }
 
 });
 
