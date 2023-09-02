@@ -2,6 +2,7 @@ import {Router } from "express";
 import { PrismaClient } from "@prisma/client";
 
 const EMAIL_TOKEN_EXPIRATION_MINUTES = 10;
+const AUTHENTICATION_TOKEN_EXPIRATION_HOURS = 12;
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -78,6 +79,36 @@ router.post("/authenticate", async(req, res)=> {
      if(dbEmailToken.expiration < new Date()) {
         return res.status(401).json({error:"error token expired"})
      }
+
+     if(dbEmailToken?.user?.email != email ){
+        return res.status(401).json({error: "Token is invalid"})
+     }
+
+     // Here we validated that the user is the owner of the email
+
+     //generate an ApI token
+     const expiration = new Date(new Date().getTime() + AUTHENTICATION_TOKEN_EXPIRATION_HOURS * 60 * 60 * 10000);
+
+     const apiToken = await prisma.token.create({
+        data: {
+            type: "API",
+            expiration,
+            user: {
+                connect: {
+                    email,
+                },
+            },
+        },
+     });
+
+     //Invalidate the email token
+
+     await prisma.token.update({
+        where: {id: dbEmailToken.id},
+        data: {valid: false},
+     })
+
+
      res.sendStatus(200);
      
 })
