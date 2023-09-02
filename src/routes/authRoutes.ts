@@ -58,7 +58,28 @@ router.post("/login", async(req, res)=>{
 //Generate a long-lived JWT token
 
 router.post("/authenticate", async(req, res)=> {
+     const {email, emailToken} = req.body;
 
+     const dbEmailToken = await prisma.token.findUnique({
+        where:{
+            emailToken
+        },
+        include: {
+            user: true
+        }
+     })
+
+     console.log(dbEmailToken);
+
+     if(!dbEmailToken || !dbEmailToken.valid){
+        return res.sendStatus(401);
+     }
+
+     if(dbEmailToken.expiration < new Date()) {
+        return res.status(401).json({error:"error token expired"})
+     }
+     res.sendStatus(200);
+     
 })
 
 
