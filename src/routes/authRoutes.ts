@@ -1,6 +1,8 @@
 import {Router } from "express";
 import { PrismaClient } from "@prisma/client";
 
+const EMAIL_TOKEN_EXPIRATION_MINUTES = 10;
+
 const router = Router()
 const prisma = new PrismaClient()
 
@@ -19,8 +21,36 @@ router.post("/login", async(req, res)=>{
     //generate a token
 
     const emailToken = generateEmailToken();
+    const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 10000);
+     
+    try {
+        const createdToken = await prisma.token.create({
+            data: {
+                type: "EMAIL",
+                emailToken,
+                expiration,
+                user: {
+                    connectOrCreate: {
+                        where: {email},
+                        create: {email}
+                    }
+                }
+            }
+        });
+    
+        console.log(createdToken);
+    
+        //send emailToken to user's email
+    
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e);
+        res.status(400).json({error: "Couldn't start the auth process"})
+        
+    }
 
-    const createdToken 
+  
+    
 
 })
 
