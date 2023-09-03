@@ -14,57 +14,32 @@ const JWT_SECRET = 'SUPER SECRET';
 //create tweet
 router.post("/", async(req, res) =>{
     
+
     
-    const {content, image, } = req.body
-    const authHeader = req.headers["authorization"];
+    const {content, image, } = req.body;
+        //@ts-ignore
+    const user = req.user;
+   
 
-    console.log(authHeader);
 
-    const jwtToken = authHeader?.split(' ')[1];
-    if(!jwtToken){
-        return res.sendStatus(401);
-    }
-    //decode  the jwt token
-
+    
     try {
-        const payload = (await jwt.verify(jwtToken, JWT_SECRET)) as {
-            tokenId: number
-        };
-        const dbToken = await prisma.token.findUnique({
-            where: {id: payload.tokenId},
-            include:{user: true},
-        })
-        
-        if(!dbToken?.valid || dbToken.expiration < new Date()){
-           return res.status(401).json({error: "API token expired"});
-        }
-       
-        console.log(dbToken.user);
-        
-    } catch (e) {
-        console.log(e);
-        
-        return res.sendStatus(401);
-    }
-    res.sendStatus(200);
-
-    
-//     try {
 
    
 
-//     const result = await prisma.tweet.create({
-//         data: {
-//             content,
-//             image,
-//             userId // TODO manage based on the auth user
-//         },
-//      });
+    const result = await prisma.tweet.create({
+        data: {
+            content,
+            image,
+            userId: user.id
+        },
+     });
      
-//      res.json(result);
-// } catch (e) {
-//     res.status(400).json({error: "Username and email should be unique"})
-// }
+     res.json(result).status(200);
+   
+} catch (e) {
+    res.status(400).json({error: "Username and email should be unique"})
+}
 
 });
 

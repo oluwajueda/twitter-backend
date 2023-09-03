@@ -1,11 +1,16 @@
 import {Request, Response, NextFunction} from "express";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 
 
 const prisma = new PrismaClient();
 const JWT_SECRET = 'SUPER SECRET';
-export async function authenticateToken(req: Request, res:Response, next: NextFunction) {
+
+
+
+type AuthRequest = Request & { user?: User };
+
+export async function authenticateToken(req: AuthRequest, res:Response, next: NextFunction) {
     const authHeader = req.headers["authorization"];
 
     console.log(authHeader);
@@ -30,10 +35,14 @@ export async function authenticateToken(req: Request, res:Response, next: NextFu
         }
        
         console.log(dbToken.user);
+        req.user = dbToken.user
         
     } catch (e) {
         console.log(e);
         
         return res.sendStatus(401);
     }
+
+    next()
+
 }
